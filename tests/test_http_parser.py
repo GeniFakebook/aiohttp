@@ -56,9 +56,9 @@ def parser(loop: Any, protocol: Any, request: Any):
         protocol,
         loop,
         2**16,
-        max_line_size=8190,
+        max_line_size=32768,
         max_headers=32768,
-        max_field_size=8190,
+        max_field_size=32768,
     )
 
 
@@ -75,9 +75,9 @@ def response(loop: Any, protocol: Any, request: Any):
         protocol,
         loop,
         2**16,
-        max_line_size=8190,
+        max_line_size=32768,
         max_headers=32768,
-        max_field_size=8190,
+        max_field_size=32768,
     )
 
 
@@ -429,13 +429,13 @@ def test_max_header_field_size(parser, size) -> None:
     name = b"t" * size
     text = b"GET /test HTTP/1.1\r\n" + name + b":data\r\n\r\n"
 
-    match = f"400, message='Got more than 8190 bytes \\({size}\\) when reading"
+    match = f"400, message='Got more than 32768 bytes \\({size}\\) when reading"
     with pytest.raises(http_exceptions.LineTooLong, match=match):
         parser.feed_data(text)
 
 
 def test_max_header_field_size_under_limit(parser) -> None:
-    name = b"t" * 8190
+    name = b"t" * 32768
     text = b"GET /test HTTP/1.1\r\n" + name + b":data\r\n\r\n"
 
     messages, upgrade, tail = parser.feed_data(text)
@@ -457,13 +457,13 @@ def test_max_header_value_size(parser, size) -> None:
     name = b"t" * size
     text = b"GET /test HTTP/1.1\r\n" b"data:" + name + b"\r\n\r\n"
 
-    match = f"400, message='Got more than 8190 bytes \\({size}\\) when reading"
+    match = f"400, message='Got more than 32768 bytes \\({size}\\) when reading"
     with pytest.raises(http_exceptions.LineTooLong, match=match):
         parser.feed_data(text)
 
 
 def test_max_header_value_size_under_limit(parser) -> None:
-    value = b"A" * 8190
+    value = b"A" * 32768
     text = b"GET /test HTTP/1.1\r\n" b"data:" + value + b"\r\n\r\n"
 
     messages, upgrade, tail = parser.feed_data(text)
@@ -485,7 +485,7 @@ def test_max_header_value_size_continuation(parser, size) -> None:
     name = b"T" * (size - 5)
     text = b"GET /test HTTP/1.1\r\n" b"data: test\r\n " + name + b"\r\n\r\n"
 
-    match = f"400, message='Got more than 8190 bytes \\({size}\\) when reading"
+    match = f"400, message='Got more than 32768 bytes \\({size}\\) when reading"
     with pytest.raises(http_exceptions.LineTooLong, match=match):
         parser.feed_data(text)
 
@@ -608,13 +608,13 @@ def test_http_request_parser_bad_version(parser) -> None:
 @pytest.mark.parametrize("size", [40965, 8191])
 def test_http_request_max_status_line(parser, size) -> None:
     path = b"t" * (size - 5)
-    match = f"400, message='Got more than 8190 bytes \\({size}\\) when reading"
+    match = f"400, message='Got more than 32768 bytes \\({size}\\) when reading"
     with pytest.raises(http_exceptions.LineTooLong, match=match):
         parser.feed_data(b"GET /path" + path + b" HTTP/1.1\r\n\r\n")
 
 
 def test_http_request_max_status_line_under_limit(parser) -> None:
-    path = b"t" * (8190 - 5)
+    path = b"t" * (32768 - 5)
     messages, upgraded, tail = parser.feed_data(
         b"GET /path" + path + b" HTTP/1.1\r\n\r\n"
     )
@@ -651,13 +651,13 @@ def test_http_response_parser_utf8(response) -> None:
 @pytest.mark.parametrize("size", [40962, 8191])
 def test_http_response_parser_bad_status_line_too_long(response, size) -> None:
     reason = b"t" * (size - 2)
-    match = f"400, message='Got more than 8190 bytes \\({size}\\) when reading"
+    match = f"400, message='Got more than 32768 bytes \\({size}\\) when reading"
     with pytest.raises(http_exceptions.LineTooLong, match=match):
         response.feed_data(b"HTTP/1.1 200 Ok" + reason + b"\r\n\r\n")
 
 
 def test_http_response_parser_status_line_under_limit(response) -> None:
-    reason = b"O" * 8190
+    reason = b"O" * 32768
     messages, upgraded, tail = response.feed_data(
         b"HTTP/1.1 200 " + reason + b"\r\n\r\n"
     )
@@ -890,9 +890,9 @@ def test_parse_bad_method_for_c_parser_raises(loop, protocol):
         protocol,
         loop,
         2**16,
-        max_line_size=8190,
+        max_line_size=32768,
         max_headers=32768,
-        max_field_size=8190,
+        max_field_size=32768,
     )
 
     with pytest.raises(aiohttp.http_exceptions.BadStatusLine):

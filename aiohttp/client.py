@@ -188,6 +188,9 @@ class ClientSession:
             "_ws_response_class",
             "_trace_configs",
             "_read_bufsize",
+            "_max_line_size",
+            "_max_headers",
+            "_max_field_size",
         ]
     )
 
@@ -220,6 +223,9 @@ class ClientSession:
         requote_redirect_url: bool = True,
         trace_configs: Optional[List[TraceConfig]] = None,
         read_bufsize: int = 2**16,
+        max_line_size: int = 32768,
+        max_headers: int = 32768,
+        max_field_size: int = 32768,
     ) -> None:
         if loop is None:
             if connector is not None:
@@ -293,6 +299,9 @@ class ClientSession:
         self._trust_env = trust_env
         self._requote_redirect_url = requote_redirect_url
         self._read_bufsize = read_bufsize
+        self._max_line_size = max_line_size
+        self._max_headers = max_headers
+        self._max_field_size = max_field_size
 
         # Convert to list of tuples
         if headers:
@@ -390,6 +399,9 @@ class ClientSession:
         proxy_headers: Optional[LooseHeaders] = None,
         trace_request_ctx: Optional[SimpleNamespace] = None,
         read_bufsize: Optional[int] = None,
+        max_line_size: Optional[int] = None,
+        max_headers: Optional[int] = None,
+        max_field_size: Optional[int] = None,
     ) -> ClientResponse:
 
         # NOTE: timeout clamps existing connect and read timeouts.  We cannot
@@ -449,6 +461,15 @@ class ClientSession:
 
         if read_bufsize is None:
             read_bufsize = self._read_bufsize
+
+        if max_line_size is None:
+            max_line_size = self._max_line_size
+
+        if max_headers is None:
+            max_headers = self._max_headers
+
+        if max_field_size is None:
+            max_field_size = self._max_field_size
 
         traces = [
             Trace(
